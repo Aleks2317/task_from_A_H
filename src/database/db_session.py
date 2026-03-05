@@ -1,12 +1,14 @@
-from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    async_sessionmaker,
-    AsyncSession
-)
+from typing import AsyncGenerator
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.settings import db_user, db_password, db_host, db_port, db_name
+from src.database.db import async_session_maker
 
 
-DATABASE_URL = f"postgresql+asyncpg://{db_user}:{db_password}@{db_host}:{db_port}/{db_name}"
-
-engine = create_async_engine(DATABASE_URL, )
+async def get_db_postgres() -> AsyncGenerator[AsyncSession, None]:
+    """Dependency generator that provides an async database session.
+    Ensures session is closed after use, even if an error occurs."""
+    with async_session_maker() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
