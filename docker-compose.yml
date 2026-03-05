@@ -3,7 +3,7 @@ services:
     image: postgres:14
     container_name: postgres_task_A_H
     environment:
-      POSTGRES_USER: amin
+      POSTGRES_USER: db_user
       POSTGRES_PASSWORD: "123"
       POSTGRES_DB: mock_db
       PGDATA: /var/lib/postgresql/data/pgdata
@@ -28,7 +28,7 @@ services:
                -c wal_buffers=4MB
     healthcheck:
 
-      test: [ "CMD-SHELL", "pg_isready -U amin -d mock_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U db_user -d mock_db" ]
       interval: 10s
       timeout: 5s
       retries: 5

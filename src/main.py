@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 
 
+
 app = FastAPI(title="API for monitoring", version="1.0")
 
 
