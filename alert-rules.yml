@@ -1,0 +1,29 @@
+groups:
+  - name: api-alerts
+    rules:
+      - alert: HighLatency
+        expr: histogram_quantile(0.95, rate(api_request_duration_seconds_bucket[5m])) > 1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High latency detected on API (P95 > 1s)"
+          description: "API response time is too high for 95th percentile: {{ $value }}s"
+
+      - alert: HighErrorRate
+        expr: rate(api_requests_total{status_code=~"5.."}[5m]) > 0.1
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is above threshold: {{ $value }} errors/sec"
+
+      - alert: LowAvailability
+        expr: sum(rate(api_requests_total[5m])) == 0
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: "API appears to be down"
+          description: "No requests received in the last 5 minutes"

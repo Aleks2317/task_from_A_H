@@ -69,12 +69,12 @@ The FastAPI application exposes the following endpoints:
 
 * Git (for cloning the repository).
 
-[//]: # (### Steps to get started)
+### Steps to get started
 
-[//]: # (1. Clone the repository:)
+1. Clone the repository:
 
-[//]: # (```bash)
+```bash
 
-[//]: # (git clone <repository URL>)
+git clone https://github.com/Aleks2317/task_from_A_H.git
 
-[//]: # (cd <project folder name>)
+cd task_from_A_H
