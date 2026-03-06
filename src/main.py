@@ -1,22 +1,40 @@
-from typing import AsyncGenerator
+import asyncio
+import time
+
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy import select
 from sqlalchemy.orm import Session
-from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.database.db import create_tables
 from src.database.db_session import get_db_postgres
 from src.models import Message
-from src.schemas import MessageResponse, ProcessRequest
+from src.schemas import MessageResponse, ProcessRequest, ProcessResponse
+from src.seed_data import seed_messages
 from src.logging_config import logger
 
 
 app = FastAPI(title="API for monitoring", version="1.0")
 
 
-async def get_db() -> AsyncGenerator[AsyncSession, None]:
-    async for session in get_db_postgres():
-        yield session
+@app.on_event("startup")
+async def startup_event():
+    """Initialization at application startup
+    Creating tables in the database if they don't exist
+    Filling the database with test data"""
+    await create_tables()
 
+    await seed_messages()
+
+    logger.info(
+        "Application started successfully",
+        environment="development"
+    )
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Cleaning when the application stops"""
+    logger.info("Application shutting down")
 
 
 @app.get("/health", response_model=dict)
@@ -26,8 +44,8 @@ async def health_status() -> dict:
     return {"status": "healthy"}
 
 
-@app.get("message/{message_id}", response_model=MessageResponse)
-async def get_message_id(message_id: int, db: Session = Depends(get_db)) -> MessageResponse:
+@app.get("/message/{message_id}", response_model=MessageResponse)
+async def get_message_id(message_id: int, db: Session = Depends(get_db_postgres)) -> MessageResponse:
     """Get a message by ID from the database
     Arguments:
         message_id: Message ID
@@ -38,10 +56,11 @@ async def get_message_id(message_id: int, db: Session = Depends(get_db)) -> Mess
     logger.info(f"Get message {message_id} from database")
 
     stmt = select(Message).where(Message.id == message_id)
-    message = db.scalars(stmt).first()
+    result = await db.scalars(stmt)
+    message = result.first()
 
     if message is None:
-        logger.warning("Message not found", message_id=id)
+        logger.warning("Message not found", message_id=message_id)
         raise HTTPException(
             status_code=404,
             detail=f"Message with ID {message_id} not found"
@@ -56,14 +75,31 @@ async def get_message_id(message_id: int, db: Session = Depends(get_db)) -> Mess
     return MessageResponse(id=message.id, text=message.text)
 
 
-@app.post("/process")
-async def process_data(data: str) -> dict:
-    """processes data"""
-    pass
+@app.post("/process", response_model=ProcessResponse)
+async def process_data(data: ProcessRequest) -> ProcessResponse:
+    """Process data with delay simulation
+    Args:
+        data: Input data to be processed
+    Returns:
+        ProcessResponse: Processing result"""
+    start_time = time.time()
+    logger.info("Processing started", input_length=len(data.data))
 
+    await asyncio.sleep(0.5)
 
-@app.get("/metrics")
-async def get_metrics() -> dict:
-    """metrics with Prometheus"""
-    pass
+    processing_time = time.time() - start_time
 
+    result = {
+        "input": data.data,
+        "processed": f"Processed: {data.data}",
+        "processing_time": f"{processing_time:.2f}s"
+    }
+
+    logger.info(
+        "Processing completed",
+        input_length=len(data.data),
+        processing_time=f"{processing_time:.2f}s",
+        status="success"
+    )
+
+    return ProcessResponse(**result)

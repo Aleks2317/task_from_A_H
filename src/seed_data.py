@@ -24,4 +24,5 @@ async def seed_messages():
     except Exception as e:
         logger.error(f" NO # Error inserting seed data: {e}")
         await db.rollback()
-
+    finally:
+        await db.close()

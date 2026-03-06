@@ -1,18 +1,6 @@
 from pydantic import BaseModel
 
 
-class MessageIDRequest(BaseModel):
-    """Request schema for /message"""
-    message_id: int
-
-    class Config:
-        json_encoders = {
-            "example": {
-                "message_id": 1
-            }
-        }
-
-
 class MessageResponse(BaseModel):
     """Response schema for /message/{id}"""
     id: int
@@ -39,4 +27,17 @@ class ProcessRequest(BaseModel):
         }
 
 
+class ProcessResponse(BaseModel):
+    """Схема ответа для /process"""
+    input: str
+    processed: str
+    processing_time: str
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "input": "test",
+                "processed": "Processed: test",
+                "processing_time": "0.50s"
+            }
+        }

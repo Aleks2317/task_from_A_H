@@ -26,3 +26,9 @@ async_session_maker = async_sessionmaker(
 
 class Base(DeclarativeBase):
     pass
+
+
+async def create_tables():
+    """Creates tables in the database if they do not exist"""
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
