@@ -2,8 +2,10 @@ import asyncio
 import time
 
 from fastapi import FastAPI, Depends, HTTPException
+from starlette.middleware.cors import CORSMiddleware
 from sqlalchemy import select
 from sqlalchemy.orm import Session
+from prometheus_fastapi_instrumentator import Instrumentator
 
 from src.database.db import create_tables
 from src.database.db_session import get_db_postgres
@@ -11,9 +13,31 @@ from src.models import Message
 from src.schemas import MessageResponse, ProcessRequest, ProcessResponse
 from src.seed_data import seed_messages
 from src.logging_config import logger
-
+from src.castom_prometeus_metric import measure_latency
 
 app = FastAPI(title="API for monitoring", version="1.0")
+
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+
+instrumentator = Instrumentator(
+    should_group_status_codes=True,
+    should_ignore_untagged=True,
+    should_respect_env_var=True,
+    env_var_name="ENABLE_METRICS",
+)
+instrumentator.instrument(app).expose(
+    app,
+    endpoint="/metrics",
+    include_in_schema=True,
+)
 
 
 @app.on_event("startup")
@@ -76,6 +100,7 @@ async def get_message_id(message_id: int, db: Session = Depends(get_db_postgres)
 
 
 @app.post("/process", response_model=ProcessResponse)
+@measure_latency("process")
 async def process_data(data: ProcessRequest) -> ProcessResponse:
     """Process data with delay simulation
     Args:
