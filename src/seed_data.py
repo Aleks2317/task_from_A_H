@@ -1,11 +1,14 @@
+from sqlalchemy import delete
+
 from src.database.db_session import async_session_maker
 from src.models import Message
+from src.logging_config import logger
 
 
 async def seed_messages():
-    db = await async_session_maker()
+    db = async_session_maker()
     try:
-        await db.select(Message).delete()
+        await db.execute(delete(Message))
 
         test_message = [
             f"Text message#{i}: This is a test message." for i in range(1, 21)
@@ -13,11 +16,12 @@ async def seed_messages():
 
         for id_, text in enumerate(test_message, start=1):
             message = Message(id=id_, text=text)
-            await db.add(message)
+            db.add(message)
 
         await db.commit()
-        print(" OK # Seed data inserted successfully (20 messages)")
+        logger.info(" OK # Seed data inserted successfully (20 messages)")
+
     except Exception as e:
-        print(f" NO # Error inserting seed data: {e}")
+        logger.error(f" NO # Error inserting seed data: {e}")
         await db.rollback()
 

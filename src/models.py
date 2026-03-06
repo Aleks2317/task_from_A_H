@@ -8,3 +8,4 @@ class Message(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     text = Column(String, nullable=False, comment="Text message")
+
