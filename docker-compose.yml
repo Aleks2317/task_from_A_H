@@ -1,5 +1,5 @@
 services:
-  web:
+  app:
     build: .
     ports:
       - "8000:8000"
@@ -27,7 +27,7 @@ services:
       - monitoring-net
 
   prometheus:
-    image: prometheus:latest
+    image: prom/prometheus:v2.54.1
     ports:
       - "9090:9090"
     volumes:

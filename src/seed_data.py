@@ -1,8 +1,8 @@
 from sqlalchemy import delete
 
-from src.database.db_session import async_session_maker
-from src.models import Message
-from src.logging_config import logger
+from .database.db_session import async_session_maker
+from .models import Message
+from .logging_config import logger
 
 
 async def seed_messages():
